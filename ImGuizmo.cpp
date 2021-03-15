@@ -1002,11 +1002,11 @@ namespace ImGuizmo
       gContext.mCameraUp = viewInverse.v.up;
 
       // projection reverse
-      vec_t far;
-      matrix_t projectionInverse;
-      projectionInverse.Inverse(gContext.mViewProjection);
-      far.Transform(makeVect(0, 0, 10.f, 1.f), projectionInverse);
-      gContext.mReversed = (far.z/far.w) < 0.f;
+       vec_t near, far;
+       near.Transform(makeVect(0, 0, 1.f, 1.f), gContext.mProjectionMat);
+       far.Transform(makeVect(0, 0, 2.f, 1.f), gContext.mProjectionMat);
+
+       gContext.mReversed = (near.z/near.w) > (far.z / far.w);
 
       // compute scale from the size of camera right vector projected on screen at the matrix position
       vec_t pointRight = viewInverse.v.right;
@@ -1201,7 +1201,7 @@ namespace ImGuizmo
          {
             continue;
          }
-         ImVec2 circlePos[circleMul * halfCircleSegmentCount + 1];
+         ImVec2* circlePos = (ImVec2*) alloca(sizeof(ImVec2) * (circleMul * halfCircleSegmentCount + 1));
 
          float angleStart = atan2f(cameraToModelNormalized[(4 - axis) % 3], cameraToModelNormalized[(3 - axis) % 3]) + ZPI * 0.5f + 0.25f;
 
@@ -1781,7 +1781,7 @@ namespace ImGuizmo
          const float len = IntersectRayPlane(gContext.mRayOrigin, gContext.mRayVector, pickupPlan);
          vec_t localPos = gContext.mRayOrigin + gContext.mRayVector * len - gContext.mModel.v.position;
 
-         if (Dot(Normalized(localPos), gContext.mRayVector) > FLT_EPSILON)
+         if (Dot(Normalized(localPos), gContext.mRayVector) < -FLT_EPSILON)
          {
             continue;
          }
